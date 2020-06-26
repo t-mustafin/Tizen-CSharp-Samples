@@ -58,7 +58,7 @@ namespace VoiceMemo
             }
         }
 
-        protected override async void OnStart()
+        protected async override void OnStart()
         {
             // Handle when your app starts
             // ask an user to grant the permission for recorder and media storage.

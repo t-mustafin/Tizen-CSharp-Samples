@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using VoiceMemo.Models;
 using VoiceMemo.Resx;
@@ -424,7 +423,7 @@ namespace VoiceMemo.ViewModels
             }
         }
 
-        private void Request(RecordingCommandType request)
+        void Request(RecordingCommandType request)
         {
             switch (request)
             {
@@ -444,7 +443,7 @@ namespace VoiceMemo.ViewModels
                     CancelCommandRequested();
                     break;
                 case RecordingCommandType.Stop:
-                    _ = StopCommandRequested(); // caution: fire-and-forget asynchronous call
+                    StopCommandRequested();
                     break;
             }
         }
@@ -458,7 +457,7 @@ namespace VoiceMemo.ViewModels
             }
         }
 
-        private async Task StopCommandRequested()
+        private async void StopCommandRequested()
         {
             if (RecordingViewModelState == RecordingViewModelState.Stopped)
             {

@@ -19,7 +19,6 @@ using Native = Tizen.Applications;
 using Tizen.Multimedia;
 using Tizen.System;
 using System;
-using System.Threading.Tasks;
 
 namespace Alarm.Implements
 {
@@ -123,7 +122,7 @@ namespace Alarm.Implements
         /// <summary>
         /// Asynchronously plays ringing sound
         /// </summary>
-        public static async Task PlaySound()
+        async public static void PlaySound()
         {
             if (player == null)
             {
@@ -132,8 +131,8 @@ namespace Alarm.Implements
 
                 player = new Player();
                 string uri = ResourceDir + SoundNotificationUri;
-                MediaUriSource soundSource = new MediaUriSource(uri);
-                player.SetSource(soundSource);
+                MediaUriSource soudSource = new MediaUriSource(uri);
+                player.SetSource(soudSource);
 
                 player.ApplyAudioStreamPolicy(audioStreamPolicy);
                 await player.PrepareAsync();
@@ -163,7 +162,7 @@ namespace Alarm.Implements
         }
 
         /// <summary>
-        /// Stops ringing
+        /// Asynchronously stops ringing
         /// </summary>
         public static void StopSound()
         {

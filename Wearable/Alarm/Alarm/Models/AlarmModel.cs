@@ -203,8 +203,7 @@ namespace Alarm.Models
         /// </summary>
         public static void SaveDictionary()
         {
-            // TODO: Convert to an asynchronous operation.
-            AlarmPersistentHandler.SerializeAlarmRecord(AlarmModel.AlarmRecordDictionary);
+           AlarmPersistentHandler.SerializeAlarmRecordAsync(AlarmModel.AlarmRecordDictionary).Wait();
         }
 
         ///<summary>

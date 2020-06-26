@@ -14,6 +14,7 @@
 //limitations under the License.
 
 using System.Windows.Input;
+using Tizen;
 using Xamarin.Forms;
 
 namespace HeartRateMonitor.Controls
@@ -102,8 +103,10 @@ namespace HeartRateMonitor.Controls
         /// </summary>
         public async void Display()
         {
+            Log.Debug("HRM", "oh boy");
             await Application.Current.MainPage.DisplayAlert(Title, Message, "OK");
 
+            Log.Debug("HRM", "sure");
             ConfirmCommand?.Execute(null);
         }
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 using System;
 using System.IO;
 using TApplication = Tizen.Applications.Application;
@@ -32,14 +33,14 @@ namespace Alarm.Implements
             _path = TApplication.Current.DirectoryInfo.Data;
         }
 
-        public Stream OpenFile(string filePath, FileMode fileMode)
+        public Stream OpenFile(string filePath, System.IO.FileMode fileMode)
         {
             if (filePath == null || filePath.Trim().Length == 0)
             {
                 throw new ArgumentNullException("File path arguments are invalid.");
             }
 
-            return new FileStream(Path.Combine(_path, filePath), fileMode, FileAccess.ReadWrite, FileShare.Read);
+            return new FileStream(Path.Combine(_path, filePath), fileMode, System.IO.FileAccess.ReadWrite, System.IO.FileShare.Read);
         }
     }
 }

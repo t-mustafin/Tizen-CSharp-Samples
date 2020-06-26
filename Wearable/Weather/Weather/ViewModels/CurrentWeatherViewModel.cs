@@ -136,6 +136,17 @@ namespace Weather.ViewModels
             set => SetProperty(ref _forecast, value);
         }
 
+        /// <summary>
+        /// Indicates if initialization was completed.
+        /// </summary>
+        public bool InitializationCompleted => ((App)Application.Current).IsInitialized =
+            Forecast != null && CurrentWeather != null && CityTimeZone != null &&
+            Forecast.IsSuccessfullyCompleted &&
+            CurrentWeather.IsSuccessfullyCompleted &&
+            CityTimeZone.IsSuccessfullyCompleted;
+
+        public bool InitializationInProgress => !InitializationCompleted;
+
         #endregion
 
         #region methods
@@ -145,14 +156,15 @@ namespace Weather.ViewModels
         /// </summary>
         public CurrentWeatherViewModel()
         {
-            InitializeCommand = new Command(() =>
+            InitializeCommand = new Command(o =>
             {
-                CityTimeZone = new NotificationTask<Models.Location.TimeZone>(InitializeTimeZone());
-                CurrentWeather = new NotificationTask<CurrentWeather>(InitializeWeather());
-                Forecast = new NotificationTask<Forecast>(InitializeForecast());
+                CurrentWeather = null;
+                Forecast = null;
+                OnPropertyChanged(nameof(InitializationCompleted));
+                OnPropertyChanged(nameof(InitializationInProgress));
 
-                CurrentWeather.PropertyChanged += CurrentWeatherOnPropertyChanged;
-                Forecast.PropertyChanged += ForecastOnPropertyChanged;
+                CityTimeZone = new NotificationTask<Models.Location.TimeZone>(InitializeTimeZone());
+                CityTimeZone.PropertyChanged += CityTimeZoneOnPropertyChanged;
             });
 
             CheckForecastCommand = new Command(CheckForecast);
@@ -162,11 +174,11 @@ namespace Weather.ViewModels
         /// Pushes page with forecast data to navigation stack.
         /// </summary>
         /// <param name="param">Page to push to navigation stack.</param>
-        private async void CheckForecast(object param)
+        private void CheckForecast(object param)
         {
             if (param is Page page)
             {
-                await Navigation.PushAsync(page);
+                Navigation.PushAsync(page);
             }
         }
 
@@ -219,13 +231,50 @@ namespace Weather.ViewModels
         }
 
         /// <summary>
+        /// Starts request to weather API after time zone request is completed.
+        /// </summary>
+        /// <param name="sender">Object that sent event.</param>
+        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
+        private void CityTimeZoneOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
+        {
+            if (propertyChangedEventArgs.PropertyName == "Result")
+            {
+                CurrentWeather = new NotificationTask<CurrentWeather>(InitializeWeather());
+                Forecast = new NotificationTask<Forecast>(InitializeForecast());
+
+                CurrentWeather.PropertyChanged += CurrentWeatherOnPropertyChanged;
+                Forecast.PropertyChanged += ForecastOnPropertyChanged;
+            }
+        }
+
+        /// <summary>
         /// Callback method that is invoked on Forecast property change.
         /// </summary>
         /// <param name="sender">Object that sent event.</param>
         /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
-        private async void ForecastOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
+        private void ForecastOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
         {
-            var propertyName = propertyChangedEventArgs.PropertyName;
+            var task = ForecastOnPropertyChangedTask(propertyChangedEventArgs.PropertyName);
+        }
+
+        /// <summary>
+        /// Callback method that is invoked on Current Weather property change.
+        /// </summary>
+        /// <param name="sender">Object that sent event.</param>
+        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
+        private void CurrentWeatherOnPropertyChanged(object sender,
+            PropertyChangedEventArgs propertyChangedEventArgs)
+        {
+            var task = CurrentWeatherOnPropertyChangedTask(propertyChangedEventArgs.PropertyName);
+        }
+
+        /// <summary>
+        /// Method executed when one of Forecast property has changed.
+        /// </summary>
+        /// <param name="propertyName">Name of property that has changed.</param>
+        /// <returns>Task to be executed.</returns>
+        private async Task ForecastOnPropertyChangedTask(string propertyName)
+        {
             if (propertyName == nameof(NotificationTask<Forecast>.IsFaulted))
             {
                 if (Forecast.InnerException is HttpException exception)
@@ -243,24 +292,31 @@ namespace Weather.ViewModels
                         currentWeather.CityName = CityData.Name;
                     }
                 }
+
+                OnPropertyChanged(nameof(InitializationCompleted));
+                OnPropertyChanged(nameof(InitializationInProgress));
             }
         }
 
         /// <summary>
-        /// Callback method that is invoked on Current Weather property change.
+        /// Method executed when one of Current Weather property has changed.
         /// </summary>
-        /// <param name="sender">Object that sent event.</param>
-        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
-        private async void CurrentWeatherOnPropertyChanged(object sender,
-            PropertyChangedEventArgs propertyChangedEventArgs)
+        /// <param name="propertyName">Name of property that has changed.</param>
+        /// <returns>Task to be executed.</returns>
+        private async Task CurrentWeatherOnPropertyChangedTask(string propertyName)
         {
-            var propertyName = propertyChangedEventArgs.PropertyName;
             if (propertyName == nameof(NotificationTask<CurrentWeather>.IsFaulted))
             {
                 if (CurrentWeather.InnerException is HttpException exception)
                 {
                     await ErrorHandler.HandleException((int)exception.StatusCode, exception.StatusCode.ToString());
                 }
+            }
+
+            if (propertyName == nameof(NotificationTask<CurrentWeather>.IsSuccessfullyCompleted))
+            {
+                OnPropertyChanged(nameof(InitializationCompleted));
+                OnPropertyChanged(nameof(InitializationInProgress));
             }
         }
 

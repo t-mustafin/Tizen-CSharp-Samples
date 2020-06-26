@@ -21,10 +21,11 @@ namespace HeartRateMonitor
 {
     public class App : Application
     {
+
         /// <summary>
         /// An instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel AppMainViewModel { get; }
+        public MainViewModel AppMainViewModel { private set; get; }
         
         public App()
         {

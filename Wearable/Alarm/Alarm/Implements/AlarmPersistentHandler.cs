@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using System.Xml;
 using Alarm.Models;
 
@@ -60,28 +62,41 @@ namespace Alarm.Implements
         /// <param name="properties">AlarmRecordDictionary object to serialize</param>
         /// <seealso cref="IDictionary<string, AlarmRecord>">
         /// <returns> Task return type </returns>
-        public static void SerializeAlarmRecord(IDictionary<string, AlarmRecord> properties)
+        public static Task SerializeAlarmRecordAsync(IDictionary<string, AlarmRecord> properties)
         {
-            Console.WriteLine("SerializeAlarmRecord");
-
+            Console.WriteLine("SerializeAlarmRecordAsync");
+            //properties = new Dictionary<string, object>(properties);
             // Serialize property dictionary to local storage
-            var fileOpener = new FileOpener();
-            try
+            // Make sure to use Internal
+            return Task.Run(() =>
             {
-                using (var alarmFileStream = fileOpener.OpenFile(AlarmRecordStoreFile, FileMode.Create))
+                Stream alarmFileStream = null;
+                var fileOpener = new FileOpener();
+                try
                 {
-                    using (var alarmWriter = XmlDictionaryWriter.CreateBinaryWriter(alarmFileStream))
+                    alarmFileStream = fileOpener.OpenFile(AlarmRecordStoreFile, System.IO.FileMode.Create);
+                    using (XmlDictionaryWriter alarmWriter = XmlDictionaryWriter.CreateBinaryWriter(alarmFileStream))
                     {
                         var dataContractSerializer = new DataContractSerializer(typeof(Dictionary<string, AlarmRecord>));
                         dataContractSerializer.WriteObject(alarmWriter, properties);
+                        alarmFileStream = null;
                         alarmWriter.Flush();
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("[Alarm serialization error] " + e.Message);
-            }
+                catch (Exception e)
+                {
+                    Console.WriteLine("[Alarm serialization error] " + e.Message);
+                }
+                finally
+                {
+                    if (alarmFileStream != null)
+                    {
+                        alarmFileStream.Dispose();
+                    }
+                }
+
+                return;
+            });
         }
     }
 }

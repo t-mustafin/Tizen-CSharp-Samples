@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <w:CirclePage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:Weather.ViewModels;assembly=Weather"
@@ -39,18 +40,23 @@
 
     <StackLayout Orientation="Vertical">
         <ActivityIndicator
-            IsVisible="{Binding CurrentWeather.IsNotCompleted}"
-            IsRunning="{Binding CurrentWeather.IsNotCompleted}" />
+            IsVisible="{Binding InitializationInProgress}"
+            IsRunning="{Binding InitializationInProgress}"
+        />
 
         <w:CircleScrollView x:Name="myscroller">
-            <StackLayout Spacing="20">
+            <StackLayout 
+                     Spacing="20"
+                     IsVisible="{Binding InitializationCompleted}">
+
                 <Label 
                    Text="{Binding CurrentWeather.Result.CityName}"
                    HeightRequest="120"
                    MinimumHeightRequest="120"               
                    FontSize="12"
                    HorizontalTextAlignment="Center"
-                   VerticalTextAlignment="End" />
+                   VerticalTextAlignment="End"
+            />
 
                 <controls:DoubleLabel
                     MainText="{Binding CurrentWeather.Result.TimeStamp, Converter={StaticResource TimeStampToDateConverter}}"
@@ -76,10 +82,14 @@
                     HorizontalTextAlignment="Center"
                     VerticalTextAlignment="Center"
                     FontSize="8" />
+
+
+                
                 
                 <controls:DoubleLabel
                         MainText="{Binding CurrentWeather.Result.WeatherData.Temperature, Converter={StaticResource MeasurementSystemConverter}, ConverterParameter='temp'}"
                         SubText="Temperature" />
+
 
                 <StackLayout Orientation="Horizontal">
                     <controls:DoubleLabel
@@ -105,7 +115,7 @@
                         HeightRequest="90"
                         MinimumHeightRequest="90"  
                         Command="{Binding CheckForecastCommand}"
-                        IsVisible="{Binding Forecast.IsSuccessfullyCompleted}">
+                        IsVisible="{Binding InitializationCompleted}">
                     <Button.CommandParameter>
                         <views:ForecastPage>
                             <views:ForecastPage.BindingContext>
@@ -119,6 +129,7 @@
                 </Button>
             </StackLayout>
         </w:CircleScrollView>
+
 
     </StackLayout>
 </w:CirclePage>

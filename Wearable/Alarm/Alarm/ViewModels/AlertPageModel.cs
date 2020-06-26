@@ -16,6 +16,8 @@
 
 using Alarm.Implements;
 using Alarm.Models;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Alarm.ViewModels
 {
@@ -72,7 +74,7 @@ namespace Alarm.ViewModels
 
         public void StartAlert()
         {
-            _ = AlarmNativeHandler.PlaySound(); // caution: fire-and-forget asynchronous call
+            AlarmNativeHandler.PlaySound();
             AlarmNativeHandler.StartVibration();
             _alertSoundState = SoundState.Start;
         }

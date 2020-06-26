@@ -21,6 +21,7 @@ using VoiceMemo.Resx;
 using VoiceMemo.ViewModels;
 using Xamarin.Forms;
 using Tizen.Wearable.CircularUI.Forms;
+using Xamarin.Forms.Xaml;
 
 namespace VoiceMemo.Views
 {

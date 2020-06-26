@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
+using Alarm.Converters;
 using Alarm.Implements;
 using Alarm.Models;
 using Alarm.Resx;
 using Alarm.ViewModels;
 using System;
 using System.Globalization;
-using System.Threading.Tasks;
+using System.Windows.Input;
+using Tizen.Wearable.CircularUI.Forms;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -61,19 +63,19 @@ namespace Alarm.Views
         /// </summary>
         /// <param name="sender">object</param>
         /// <param name="e">SelectedItemChangedEventArgs</param>
-        async void OnItemTapped(object sender, SelectedItemChangedEventArgs e)
+        void OnItemTapped(object sender, SelectedItemChangedEventArgs e)
         {
-            // skips for no selected item case
+            /// skips for no selected item case
             if (e.SelectedItem == null)
             {
                 return;
             }
 
-            // check selected item
+            /// check selected item
             AlarmRecord alarm = e.SelectedItem as AlarmRecord;
-            // de-select first item
+            /// de-select first item
             ((ListView)sender).SelectedItem = null; // de-select the row
-            await EditAlarm(alarm);
+            EditAlarm(alarm);
         }
 
         /// <summary>
@@ -81,9 +83,9 @@ namespace Alarm.Views
         /// </summary>
         /// <param name="sender">object</param>
         /// <param name="args">EventArgs</param>
-        async void OnButtonReleased(object sender, EventArgs args)
+        void OnButtonReleased(object sender, EventArgs args)
         {
-            await CreateNewAlarm();
+            CreateNewAlarm();
         }
 
         /// <summary>
@@ -91,29 +93,29 @@ namespace Alarm.Views
         /// </summary>
         /// <param name="sender">object</param>
         /// <param name="args">EventArgs</param>
-        async void OnAddButtonClicked(object sender, EventArgs args)
+        void OnAddButtonClicked(object sender, EventArgs args)
         {
-            await CreateNewAlarm();
+            CreateNewAlarm();
         }
 
         /// <summary>
         /// Launch AlarmEdit page
         /// </summary>
-        private Task CreateNewAlarm()
+        async void CreateNewAlarm()
         {
             /// Creates default alarm record
             AlarmRecord defaultAlarmRecord = new AlarmRecord();
             defaultAlarmRecord.SetDefault();
-            return Navigation.PushAsync(AlarmPageController.GetInstance(AlarmPages.EditPage, defaultAlarmRecord));
+            await Navigation.PushAsync(AlarmPageController.GetInstance(AlarmPages.EditPage, defaultAlarmRecord));
         }
 
         /// <summary>
         /// Launch Edit page
         /// </summary>
         /// <param name="record">AlarmRecord</param>
-        private Task EditAlarm(AlarmRecord record)
+        async void EditAlarm(AlarmRecord record)
         {
-            return Navigation.PushAsync(AlarmPageController.GetInstance(AlarmPages.EditPage, record));
+            await Navigation.PushAsync(AlarmPageController.GetInstance(AlarmPages.EditPage, record));
         }
     }
 }

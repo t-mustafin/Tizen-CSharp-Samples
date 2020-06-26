@@ -15,9 +15,8 @@
 using Weather.Config;
 using Weather.Views;
 using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
+using Tizen.Wearable.CircularUI.Forms;
 
-[assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace Weather
 {
     /// <summary>
@@ -43,16 +42,19 @@ namespace Weather
         /// </summary>
         public App()
         {
-            Page root;
-            if (ApiConfig.IsApiKeyDefined())
+            // Its a NavigationPage based app that ...
+            MainPage =  new NavigationPage();
+
+            if (!ApiConfig.IsApiKeyDefined())
             {
-                root = new MainPage();
+                // either complains about a missing API key ...
+                MainPage.Navigation.PushAsync(new MissingKeyErrorPage(), false);
             }
             else
             {
-                root = new MissingKeyErrorPage();
+                // or gets you started with a MainPage UI.
+                MainPage.Navigation.PushAsync(new MainPage(), false);                
             }
-            MainPage = new NavigationPage(root);
         }
 
         #endregion

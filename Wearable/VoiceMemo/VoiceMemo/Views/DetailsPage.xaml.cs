@@ -19,6 +19,7 @@ using System;
 using VoiceMemo.Models;
 using VoiceMemo.ViewModels;
 using Xamarin.Forms;
+using Xamarin.Forms.Xaml;
 
 namespace VoiceMemo.Views
 {

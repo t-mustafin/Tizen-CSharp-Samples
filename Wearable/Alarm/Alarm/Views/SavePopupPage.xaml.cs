@@ -46,13 +46,7 @@ namespace Alarm.Views
             NavigationPage.SetHasNavigationBar(this, false);
             _record = record;
             SetPopupLabel();
-
-            Appearing += async (s, e) =>
-            {
-                // Close the pop-up after 2 seconds.
-                await Task.Delay(2000);
-                await Navigation.PopToRootAsync();
-            };
+            ClosePopup();
         }
 
         /// <summary>
@@ -206,6 +200,15 @@ namespace Alarm.Views
             }
 
             return text;
+        }
+
+        /// <summary>
+        /// After 2 seconds. this page closed and then go to the Mainpage
+        /// </summary>
+        async private void ClosePopup()
+        {
+            await Task.Delay(2000);
+            await Navigation.PopToRootAsync();
         }
     }
 }

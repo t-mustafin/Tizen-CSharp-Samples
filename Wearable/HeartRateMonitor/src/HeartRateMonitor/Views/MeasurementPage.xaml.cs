@@ -52,7 +52,15 @@ namespace HeartRateMonitor.Views
         /// </summary>
         /// <param name="sender">Object firing the event.</param>
         /// <param name="e">Arguments passed to the event.</param>
-        private async void OnMeasurementStarted(object sender, EventArgs e)
+        private void OnMeasurementStarted(object sender, EventArgs e)
+        {
+            StartHeartAnimation();
+        }
+
+        /// <summary>
+        /// Starts animation of heart
+        /// </summary>
+        private async void StartHeartAnimation()
         {
             while (_viewModel.IsMeasuring)
             {

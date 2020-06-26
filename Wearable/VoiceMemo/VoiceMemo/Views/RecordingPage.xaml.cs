@@ -21,6 +21,7 @@ using VoiceMemo.Models;
 using VoiceMemo.Services;
 using VoiceMemo.ViewModels;
 using Xamarin.Forms;
+using Xamarin.Forms.Xaml;
 
 namespace VoiceMemo.Views
 {
@@ -39,21 +40,21 @@ namespace VoiceMemo.Views
 
         public static readonly BindableProperty RecordingEffectAnimationProperty = BindableProperty.Create(nameof(RecordingEffectAnimation), typeof(bool), typeof(RecordingPage), false, propertyChanged: OnAnimationPropertyChanged);
 
-        private static async void OnAnimationPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnAnimationPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if ((bool)oldValue == false && (bool)newValue == true)
             {
-                await ((RecordingPage)(bindable)).StartVolumeEffectAnimation();
+                ((RecordingPage)(bindable)).StartVolumeEffectAnimation();
             }
         }
 
         public static readonly BindableProperty TimeFlickeringAnimationProperty = BindableProperty.Create(nameof(TimeFlickeringAnimation), typeof(bool), typeof(RecordingPage), false, propertyChanged: OnTimeFlickeringPropertyChanged);
 
-        private static async void OnTimeFlickeringPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnTimeFlickeringPropertyChanged(BindableObject bindable, object oldValue, object newValue)
         {
             if ((bool)oldValue == false && (bool)newValue == true)
             {
-                await ((RecordingPage)(bindable)).Blink();
+                ((RecordingPage)(bindable)).Blink();
             }
         }
 
@@ -144,110 +145,112 @@ namespace VoiceMemo.Views
         /// <summary>
         /// Start volume effect animation
         /// </summary>
-        private async Task StartVolumeEffectAnimation()
+        void StartVolumeEffectAnimation()
         {
             // Any background code that needs to update the user interface
             // interact with UI elements
             // call CheckVolumeAndResizeAnimationAsync method every 100ms
-            while (((RecordingPageModel) BindingContext).RecordingEffectOn)
-            {
-                await Task.WhenAll(CheckVolumeAndResizeAnimationAsync(), Task.Delay(100));
-            }
+            Device.StartTimer(TimeSpan.FromMilliseconds(100), CheckVolumeAndResizeAnimationAsync);
         }
 
         // Draw animation effects depending on volume level
-        private async Task CheckVolumeAndResizeAnimationAsync()
+        private bool CheckVolumeAndResizeAnimationAsync()
         {
             RecordingPageModel recordingViewModel = (RecordingPageModel)BindingContext;
-
-            if (recordingViewModel.AudioRecordingService.State == AudioRecordState.Recording)
+            // @20180217-vincent: async chain can be stopped by using Task.Factory.StartNew(...)
+            //                    Device.InovkeOnMainThread was removed because it is guaranteed main thread
+            Task.Factory.StartNew(async () =>
             {
-                double fScaleValue = 0, fShodowScaleValue = 0;
-                double volume = recordingViewModel.AudioRecordingService.GetRecordingLevel(); //-300 ~ 0
-                int uwLevel = 0;
-                int uwShadowLevel = 0;
-                int effectLevel = 0;
-                double db = volume;
-                const int VOLUME_LEVEL_MIN = -55;
-                const int VOLUME_LEVEL_MAX = -10;
-                const double LINEAR_VI_SCALE = 1.0 / 20.0;
-
-                if (db < VOLUME_LEVEL_MIN)
+                if (recordingViewModel.AudioRecordingService.State == AudioRecordState.Recording)
                 {
-                    effectLevel = 0;
-                }
-                else if (db > VOLUME_LEVEL_MAX)
-                {
-                    effectLevel = VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN;
-                }
-                else
-                {
-                    effectLevel = (int)(db - VOLUME_LEVEL_MIN);
-                }
+                    double fScaleValue = 0, fShodowScaleValue = 0;
+                    double volume = recordingViewModel.AudioRecordingService.GetRecordingLevel(); //-300 ~ 0
+                    int uwLevel = 0;
+                    int uwShadowLevel = 0;
+                    int effectLevel = 0;
+                    double db = volume;
+                    const int VOLUME_LEVEL_MIN = -55;
+                    const int VOLUME_LEVEL_MAX = -10;
+                    const double LINEAR_VI_SCALE = 1.0 / 20.0;
 
-                uwLevel = effectLevel;
+                    if (db < VOLUME_LEVEL_MIN)
+                    {
+                        effectLevel = 0;
+                    }
+                    else if (db > VOLUME_LEVEL_MAX)
+                    {
+                        effectLevel = VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN;
+                    }
+                    else
+                    {
+                        effectLevel = (int)(db - VOLUME_LEVEL_MIN);
+                    }
 
-                if (uwLevel > 1)
-                {
-                    uwShadowLevel = uwLevel / 4 + (new Random().Next() % (uwLevel / 2));
-                }
+                    uwLevel = effectLevel;
 
-                if (uwLevel > prevAudioLevel)
-                {
-                    fScaleValue = (30 + 70 * (uwLevel) / (VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN)) / 100.0;
-                    fShodowScaleValue = (30 + 70 * (uwShadowLevel) / (VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN)) / 100.0;
+                    if (uwLevel > 1)
+                    {
+                        uwShadowLevel = uwLevel / 4 + (new Random().Next() % (uwLevel / 2));
+                    }
 
-                    if (fScaleValue < prevScale)
+                    if (uwLevel > prevAudioLevel)
+                    {
+                        fScaleValue = (30 + 70 * (uwLevel) / (VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN)) / 100.0;
+                        fShodowScaleValue = (30 + 70 * (uwShadowLevel) / (VOLUME_LEVEL_MAX - VOLUME_LEVEL_MIN)) / 100.0;
+
+                        if (fScaleValue < prevScale)
+                        {
+                            fScaleValue = prevScale - LINEAR_VI_SCALE;
+                        }
+
+                        if (fShodowScaleValue < prevShadowScale)
+                        {
+                            fShodowScaleValue = prevShadowScale - LINEAR_VI_SCALE;
+                        }
+                    }
+                    else
                     {
                         fScaleValue = prevScale - LINEAR_VI_SCALE;
-                    }
-
-                    if (fShodowScaleValue < prevShadowScale)
-                    {
                         fShodowScaleValue = prevShadowScale - LINEAR_VI_SCALE;
                     }
-                }
-                else
-                {
-                    fScaleValue = prevScale - LINEAR_VI_SCALE;
-                    fShodowScaleValue = prevShadowScale - LINEAR_VI_SCALE;
-                }
 
-                if (fScaleValue < 0.3)
-                {
-                    fScaleValue = 0.3;
-                }
-                else if (fScaleValue > 1.0)
-                {
-                    fScaleValue = 1.0;
-                }
+                    if (fScaleValue < 0.3)
+                    {
+                        fScaleValue = 0.3;
+                    }
+                    else if (fScaleValue > 1.0)
+                    {
+                        fScaleValue = 1.0;
+                    }
 
-                if (fShodowScaleValue < 0.3)
-                {
-                    fShodowScaleValue = 0.3;
+                    if (fShodowScaleValue < 0.3)
+                    {
+                        fShodowScaleValue = 0.3;
+                    }
+                    else if (fShodowScaleValue > 1.0)
+                    {
+                        fShodowScaleValue = 1.0;
+                    }
+
+                    int actualSize = (int)(fScaleValue * 360);
+                    int acutalShadowSize = (int)(fShodowScaleValue * 360);
+
+                    await DrawVolumeEffectAnimationAsync(actualSize, acutalShadowSize);
+
+                    prevAudioLevel = uwLevel;
+                    prevScale = fScaleValue;
+                    prevShadowScale = fShodowScaleValue;
                 }
-                else if (fShodowScaleValue > 1.0)
-                {
-                    fShodowScaleValue = 1.0;
-                }
-
-                int actualSize = (int)(fScaleValue * 360);
-                int acutalShadowSize = (int)(fShodowScaleValue * 360);
-
-                await DrawVolumeEffectAnimationAsync(actualSize, acutalShadowSize);
-
-                prevAudioLevel = uwLevel;
-                prevScale = fScaleValue;
-                prevShadowScale = fShodowScaleValue;
-            }
+            });
+            return ((RecordingPageModel)BindingContext).RecordingEffectOn;
         }
 
         // Draw animation depending on volume level while recording
-        private Task DrawVolumeEffectAnimationAsync(int imageSize, int shadowImageSize)
+        private async Task DrawVolumeEffectAnimationAsync(int imageSize, int shadowImageSize)
         {
             double image2Ratio = (double)imageSize / 126;
             double imageRatio = (double)shadowImageSize / 126;
-            return Task.WhenAll(
+            await Task.WhenAll(
                 VoiceRecorderBtnEffectImage2.ScaleTo(image2Ratio,50),
                 VoiceRecorderBtnEffectImage.ScaleTo(imageRatio,50));
         }
@@ -330,21 +333,22 @@ namespace VoiceMemo.Views
             }
         }
 
-        private async Task Blink()
+        private void Blink()
         {
             currentOpaque = true;
-            
-            while (((RecordingPageModel)BindingContext).TimeFlickeringOn)
-            {
-                await Task.WhenAll(BlinkInvoker(), Task.Delay(700));
-            }
+            Device.StartTimer(TimeSpan.FromMilliseconds(700), BlinkInvoker);
         }
 
-        private async Task BlinkInvoker()
+        private bool BlinkInvoker()
         {
-            opacity = currentOpaque ? 0 : 1;
-            await BlinkAnimation();
-            currentOpaque = !currentOpaque;
+            Task.Factory.StartNew(async () =>
+                {
+                    opacity = currentOpaque ? 0 : 1;
+                    await BlinkAnimation();
+                    currentOpaque = !currentOpaque;
+            });
+
+            return ((RecordingPageModel)BindingContext).TimeFlickeringOn;
         }
 
         private async Task BlinkAnimation()

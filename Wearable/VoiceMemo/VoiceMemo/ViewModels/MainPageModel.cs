@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using VoiceMemo.Models;
 using VoiceMemo.Resx;
@@ -105,22 +106,25 @@ namespace VoiceMemo.ViewModels
             });
 
             // You can get notified when an app user allows this app to use recorder and internal storage.
-            MessagingCenter.Subscribe<App, bool>(this, MessageKeys.UserPermission, async (obj, item) =>
+            MessagingCenter.Subscribe<App, bool>(this, MessageKeys.UserPermission, (obj, item) =>
             {
-                // Restore recorded voice memos
-                List<Record> tmp = await App.Database.GetItemsAsync();
-                for (int i = 0; i < tmp.Count; i++)
+                var NonUItask = Task.Run(async () =>
                 {
-                    Records.Add(tmp[i]);
-                }
-                // Speech-To-Text Service
-                GetSttService();
+                    // Restore recorded voice memos
+                    List<Record> tmp = await App.Database.GetItemsAsync();
+                    for (int i = 0; i < tmp.Count; i++)
+                    {
+                        Records.Add(tmp[i]);
+                    }
+                    // Speech-To-Text Service
+                    GetSttService();
 
-                // Media Content Service
-                if (_ContentService == null)
-                {
-                    _ContentService = DependencyService.Get<IMediaContentService>(DependencyFetchTarget.GlobalInstance);
-                }
+                    // Media Content Service
+                    if (_ContentService == null)
+                    {
+                        _ContentService = DependencyService.Get<IMediaContentService>(DependencyFetchTarget.GlobalInstance);
+                    }
+                });
             });
         }
 
